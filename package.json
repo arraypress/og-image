@@ -1,0 +1,39 @@
+{
+  "name": "@arraypress/og-image",
+  "version": "1.0.0",
+  "description": "Build-time Open Graph image renderer. One Satori + resvg template — eyebrow, title, subtitle, artwork tile, wordmark footer — brand-configurable, framework-agnostic.",
+  "type": "module",
+  "main": "src/index.js",
+  "types": "src/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./src/index.js",
+      "types": "./src/index.d.ts"
+    }
+  },
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "test": "node --test tests/og-image.test.js"
+  },
+  "keywords": [
+    "og-image",
+    "open-graph",
+    "social-card",
+    "satori",
+    "resvg",
+    "astro",
+    "build-time"
+  ],
+  "author": "David Sherlock",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/arraypress/og-image.git"
+  },
+  "dependencies": {
+    "@resvg/resvg-js": "^2.6.2",
+    "satori": "^0.26.0"
+  }
+}
