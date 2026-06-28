@@ -2,7 +2,7 @@
 
 Build-time Open Graph image renderer — one [Satori](https://github.com/vercel/satori) (HTML/JSX-like tree → SVG) + [@resvg/resvg-js](https://github.com/yisibl/resvg-js) (SVG → PNG) template that fits products, posts, news, or anything else.
 
-Eyebrow + title + subtitle on the left, an artwork tile (or initials) on the right, a wordmark/domain footer. Brand surfaces and fonts are passed in, so it has **no dependency on any site config** — your route resolves those and hands them over. Pure build-time: no adapter, no runtime JS.
+Eyebrow + title + subtitle (+ optional keyword chips) on the left, an optional artwork tile (or initials) on the right, a wordmark/domain footer. Brand surfaces and fonts are passed in, so it has **no dependency on any site config** — your route resolves those and hands them over. Pure build-time: no adapter, no runtime JS.
 
 ## Install
 
@@ -47,7 +47,8 @@ export const GET: APIRoute = async ({ props }) => {
 | `title` | `string` | **Required.** Headline. Truncated at `titleMaxLength`. |
 | `subtitle` | `string?` | Sub-line. Truncated at `subtitleMaxLength`. |
 | `eyebrow` | `string?` | Small uppercase accent label above the title. |
-| `artwork` | `string \| Uint8Array \| Buffer ?` | Right tile: an http(s) URL, a `data:` URI, or raw image bytes (MIME is sniffed). Falls back to `initials`. |
+| `chips` | `string[]?` | Short keyword pills under the subtitle. Capped at `maxChips`; blank entries dropped. |
+| `artwork` | `string \| Uint8Array \| Buffer ?` | Right tile: an http(s) URL, a `data:` URI, or raw image bytes (MIME is sniffed). Falls back to `initials` (see `tile`). |
 
 ### `options`
 
@@ -59,9 +60,45 @@ export const GET: APIRoute = async ({ props }) => {
 | `domain` | `string?` | — footer-right text |
 | `initials` | `string?` | first 3 letters of `wordmark` |
 | `wordmarkInitial` | `string?` | first letter of `wordmark` |
+| `tile` | `'auto' \| 'artwork' \| 'none'` | `'auto'` — see below |
+| `maxChips` | `number?` | `3` |
 | `titleMaxLength` | `number?` | `80` |
 | `subtitleMaxLength` | `number?` | `140` |
 | `width` / `height` | `number?` | `1200` / `630` |
+
+### Keyword chips & tile modes
+
+Add small pill tags under the subtitle, and control whether the right-hand tile shows at all:
+
+```js
+// Text-forward card with keyword chips and no tile (content runs full-width)
+await renderOgImage(
+  { title: 'The Healer', subtitle: 'A lightworker archetype', chips: ['Compassionate', 'Soothing', 'Nurturing'] },
+  { fonts, wordmark: 'Personality Tests', tile: 'none' },
+);
+
+// Character/art on the card when present, full-width text when not
+await renderOgImage(
+  { title: 'The Wolf', subtitle: 'Your spirit animal', chips: ['Loyal', 'Instinctive', 'Free'], artwork: pngBytes },
+  { fonts, wordmark: 'Personality Tests', tile: 'artwork' },
+);
+```
+
+`tile`:
+- **`'auto'`** (default) — always a tile: the artwork, or initials when absent. *(Back-compatible.)*
+- **`'artwork'`** — a tile only when `artwork` is provided; otherwise the text runs full-width (no initials).
+- **`'none'`** — never a tile; the text always runs full-width.
+
+### `buildCard(input, options?)`
+
+The pure, synchronous tree builder behind `renderOgImage` — returns the Satori element tree and needs **no fonts**. Useful for advanced rendering, or for unit tests (Satori rasterises text to glyph paths, so the rendered PNG/SVG can't be asserted on for content; assert on the tree instead).
+
+```js
+import { buildCard } from '@arraypress/og-image';
+
+const tree = buildCard({ title: 'The Healer', chips: ['Soothing'] }, { tile: 'none' });
+// → inspect/transform, or feed to satori() yourself
+```
 
 ## Notes
 
