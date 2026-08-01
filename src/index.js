@@ -108,6 +108,15 @@ export function buildCard(input = {}, options = {}) {
   const domain = options.domain ?? '';
   const initials = options.initials ?? (wordmark.slice(0, 3).toUpperCase() || 'OG');
   const wordmarkInitial = options.wordmarkInitial ?? (wordmark.charAt(0).toUpperCase() || 'O');
+  // `logo` replaces the initial-letter badge with a real mark. A data: URI or an
+  // absolute URL Satori can load; bytes are accepted and encoded here so callers
+  // can pass a readFileSync result without knowing the mime dance.
+  const logoSrc =
+    options.logo == null
+      ? null
+      : typeof options.logo === 'string'
+        ? options.logo
+        : `data:image/png;base64,${Buffer.from(options.logo).toString('base64')}`;
 
   const title = clamp(input.title ?? '', options.titleMaxLength ?? DEFAULT_TITLE_MAX);
   const subtitle = clamp(input.subtitle, options.subtitleMaxLength ?? DEFAULT_SUBTITLE_MAX);
@@ -287,12 +296,19 @@ export function buildCard(input = {}, options = {}) {
                           width: '40px',
                           height: '40px',
                           borderRadius: '8px',
-                          backgroundColor: colors.accent,
+                          backgroundColor: logoSrc ? 'transparent' : colors.accent,
                           color: colors.bg,
                           fontSize: '22px',
                           fontWeight: 700,
                         },
-                        children: wordmarkInitial,
+                        children: logoSrc
+                          ? [
+                              {
+                                type: 'img',
+                                props: { src: logoSrc, width: 40, height: 40, style: { borderRadius: '8px' } },
+                              },
+                            ]
+                          : wordmarkInitial,
                       },
                     },
                     wordmark && {

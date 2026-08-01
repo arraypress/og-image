@@ -65,6 +65,9 @@ export interface OgImageOptions {
   domain?: string;
   /** Tile glyph when there's no artwork. Default: first 3 letters of `wordmark`. */
   initials?: string;
+  /** Real logo for the footer badge, replacing the initial letter. PNG bytes,
+   *  or a data:/https: URL Satori can load. */
+  logo?: Uint8Array | Buffer | string;
   /** Letter in the footer badge. Default: first letter of `wordmark`. */
   wordmarkInitial?: string;
   /** When/whether to show the right-hand tile. Default: `'auto'`. */
