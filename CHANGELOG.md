@@ -5,6 +5,46 @@ All notable changes to `@arraypress/og-image` are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] — Unreleased
+
+### Added
+
+- **Fonts are optional.** Inter (Latin subset, 400/600/700, woff, about 90 KB)
+  now ships in `fonts/` and is used when `fonts` is left out. The template has
+  always asked for the family `Inter`, so every caller was loading the same
+  three files from `@fontsource/inter`; now none has to. It is read once per
+  process. The SIL Open Font License is included as `fonts/OFL.txt`.
+- **`backdrop`: soft colour glows and a film grain behind the content.** Each
+  glow is a colour, a centre and a radius, fading along an eased curve to its
+  own colour at nothing, so a card can carry a site's light instead of a flat
+  fill. `grain` is seeded noise, so the same card always renders the same
+  bytes. Glows replace the template's two faint accent glows.
+- **`stripe: false`** leaves off the accent stripe along the top.
+- **`fontFamily` and `displayFontFamily`.** The template asked for `Inter`
+  by name, so a site's own typeface had to be passed off as Inter, and the
+  headline couldn't differ from the text. Now the text uses `fontFamily`
+  (default `Inter`) and the title and wordmark use `displayFontFamily`
+  (default `fontFamily`).
+
+### Changed
+
+- **A logo is drawn at its own proportions.** Its width follows an SVG's
+  `viewBox` (or `width` and `height`) or a PNG's header, at the badge's 40px
+  height; a wide mark was shrunk to fit a square. A logo whose shape can't be
+  read stays square.
+- The image helpers and the backdrop live in their own modules
+  (`src/image.js`, `src/backdrop.js`); the package's exports are unchanged.
+- `logo` bytes are sniffed like `artwork`, so the bytes of an SVG, JPEG or GIF
+  are inlined with the right type. They were always labelled PNG, which meant
+  a site rasterising its own `logo.svg` through sharp just to put it on the
+  card. A `readFileSync('public/logo.svg')` now works as it is.
+- The `exports` entry gains a `default` condition, so the package can be
+  loaded with Node's `require` (which loads ES modules from Node 22.12).
+  `@arraypress/seo-astro` loads it that way from inside an Astro
+  integration, where a dynamic `import()` would go through Vite.
+- The README points Astro sites at `@arraypress/seo-astro`, whose `seo()`
+  integration renders a card per page with this package.
+
 ## [1.2.1] — 2026-09-06
 
 ### Changed

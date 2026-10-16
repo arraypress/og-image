@@ -3,7 +3,7 @@
  */
 
 export interface OgFont {
-  /** Font family name, referenced as `fontFamily` in the template (use 'Inter'). */
+  /** Font family name. The template asks for `fontFamily` (default 'Inter') and `displayFontFamily`. */
   name: string;
   /** Raw font bytes (ttf/otf/woff — Satori does NOT support woff2). */
   data: ArrayBuffer | Buffer;
@@ -18,7 +18,7 @@ export interface OgColors {
   bg?: string;
   /** Artwork-tile background. */
   cardBg?: string;
-  /** Accent — stripe, eyebrow, initials, footer badge. */
+  /** Accent — stripe, eyebrow, initials, footer badge, and the faint corner glows. */
   accent?: string;
   /** Primary text (title, wordmark). */
   text?: string;
@@ -28,6 +28,29 @@ export interface OgColors {
   muted?: string;
   /** Tile border. */
   border?: string;
+}
+
+/** A soft circle of colour behind the card's content. */
+export interface OgGlow {
+  /** Hex colour: `#rgb`, `#rrggbb`, or with alpha `#rrggbbaa`. */
+  color: string;
+  /** Centre, across, as a percentage of the card's width. May fall outside 0–100. Default: 50 */
+  x?: number;
+  /** Centre, down, as a percentage of the card's height. May fall outside 0–100. Default: 50 */
+  y?: number;
+  /** Radius, as a percentage of the card's width. Default: 50 */
+  size?: number;
+  /** Strength at the centre, 0–1, on top of the colour's own alpha. Default: 1 */
+  opacity?: number;
+}
+
+/** What's drawn over `colors.bg`, behind the content. */
+export interface OgBackdrop {
+  /** Colour glows, fading out from their centres; later ones paint under earlier ones.
+   *  When given, they replace the template's faint accent glows (`[]` for none). */
+  glows?: OgGlow[];
+  /** Film grain over the whole card: `true` for a light grain, or its strength, 0–1. Default: none */
+  grain?: boolean | number;
 }
 
 export interface OgImageInput {
@@ -55,8 +78,8 @@ export interface OgImageInput {
 export type OgTileMode = 'auto' | 'artwork' | 'none';
 
 export interface OgImageOptions {
-  /** Satori font set (at least one). Required. */
-  fonts: OgFont[];
+  /** Satori font set (at least one). Default: the bundled Inter, Latin, 400/600/700. */
+  fonts?: OgFont[];
   /** Palette overrides, merged over the defaults. */
   colors?: OgColors;
   /** Footer brand text + fallback source for the initials. Default: '' */
@@ -65,8 +88,9 @@ export interface OgImageOptions {
   domain?: string;
   /** Tile glyph when there's no artwork. Default: first 3 letters of `wordmark`. */
   initials?: string;
-  /** Real logo for the footer badge, replacing the initial letter. PNG bytes,
-   *  or a data:/https: URL Satori can load. */
+  /** Real logo for the footer badge, replacing the initial letter. PNG, JPEG
+   *  or SVG bytes (the type is sniffed), or a data:/https: URL Satori can load.
+   *  Drawn 40px tall; an SVG's or PNG's own proportions set its width, else it's square. */
   logo?: Uint8Array | Buffer | string;
   /** Letter in the footer badge. Default: first letter of `wordmark`. */
   wordmarkInitial?: string;
@@ -78,6 +102,14 @@ export interface OgImageOptions {
   titleMaxLength?: number;
   /** Subtitle truncation threshold. Default: 140 */
   subtitleMaxLength?: number;
+  /** Glows and grain behind the content. Default: two faint accent glows, no grain. */
+  backdrop?: OgBackdrop;
+  /** The accent stripe along the top. Default: `true` */
+  stripe?: boolean;
+  /** Font family for the card's text, as named in `fonts`. Default: `'Inter'` */
+  fontFamily?: string;
+  /** Font family for the title and wordmark, as named in `fonts`. Default: `fontFamily` */
+  displayFontFamily?: string;
   /** Card width in px. Default: 1200 */
   width?: number;
   /** Card height in px. Default: 630 */
@@ -96,18 +128,16 @@ export interface OgElement {
  * rasterises text to paths, so the rendered output can't be asserted on for
  * content). `renderOgImage` feeds this tree to Satori + resvg.
  */
-export function buildCard(
-  input: OgImageInput,
-  options?: Omit<OgImageOptions, 'fonts'> & { fonts?: OgFont[] }
-): OgElement;
+export function buildCard(input: OgImageInput, options?: OgImageOptions): OgElement;
 
 /**
- * Render an Open Graph card to a PNG (1200×630 by default).
+ * Render an Open Graph card to a PNG (1200×630 by default). Without `fonts`,
+ * the bundled Inter is used.
  *
  * @example
  * const png = await renderOgImage(
  *   { title: 'The Healer', subtitle: 'A lightworker archetype', chips: ['Soothing', 'Nurturing'] },
- *   { fonts, wordmark: 'Personality Tests', tile: 'artwork' },
+ *   { wordmark: 'Personality Tests', tile: 'artwork' },
  * );
  */
-export function renderOgImage(input: OgImageInput, options: OgImageOptions): Promise<Uint8Array>;
+export function renderOgImage(input: OgImageInput, options?: OgImageOptions): Promise<Uint8Array>;

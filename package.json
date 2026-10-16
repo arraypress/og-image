@@ -1,18 +1,21 @@
 {
   "name": "@arraypress/og-image",
-  "version": "1.2.1",
-  "description": "Build-time Open Graph image renderer. One Satori + resvg template — eyebrow, title, subtitle, keyword chips, optional artwork tile, wordmark footer — brand-configurable, framework-agnostic.",
+  "version": "1.3.0",
+  "description": "Build-time Open Graph image renderer. One Satori + resvg template — eyebrow, title, subtitle, keyword chips, optional artwork tile, wordmark footer — brand-configurable, framework-agnostic, with Inter bundled so it renders with no setup.",
   "type": "module",
   "main": "src/index.js",
   "types": "src/index.d.ts",
   "exports": {
     ".": {
+      "types": "./src/index.d.ts",
       "import": "./src/index.js",
-      "types": "./src/index.d.ts"
+      "default": "./src/index.js"
     }
   },
   "files": [
-    "src"
+    "src",
+    "fonts",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "test": "node --test tests/og-image.test.js"
