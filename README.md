@@ -47,7 +47,7 @@ await renderOgImage(input, { fonts, wordmark: 'WaveGrid' });
 | `subtitle` | `string?` | Sub-line. Truncated at `subtitleMaxLength`. |
 | `eyebrow` | `string?` | Small uppercase accent label above the title. |
 | `chips` | `string[]?` | Short keyword pills under the subtitle. Capped at `maxChips`; blank entries dropped. |
-| `artwork` | `string \| Uint8Array \| Buffer ?` | Right tile: an http(s) URL, a `data:` URI, or raw image bytes (MIME is sniffed). Falls back to `initials` (see `tile`). |
+| `artwork` | `string \| Uint8Array \| Buffer ?` | Right tile: an http(s) URL, a `data:` URI, or raw image bytes (MIME is sniffed). PNG, JPEG, GIF or SVG; WebP and AVIF need `sharp` — see [WebP and AVIF](#webp-and-avif). Falls back to `initials` (see `tile`). |
 
 ### `options`
 
@@ -59,7 +59,7 @@ await renderOgImage(input, { fonts, wordmark: 'WaveGrid' });
 | `domain` | `string?` | — footer-right text |
 | `initials` | `string?` | first 3 letters of `wordmark` |
 | `wordmarkInitial` | `string?` | first letter of `wordmark` |
-| `logo` | `string \| Uint8Array \| Buffer ?` | — replaces the footer badge's letter: a URL, a `data:` URI, or PNG/JPEG/SVG bytes. 40px tall, as wide as its own proportions make it |
+| `logo` | `string \| Uint8Array \| Buffer ?` | — replaces the footer badge's letter: a URL, a `data:` URI, or PNG/JPEG/SVG bytes (WebP/AVIF with `sharp`). 40px tall, as wide as its own proportions make it |
 | `backdrop` | `OgBackdrop?` | two faint accent glows — see [Backdrop](#backdrop) |
 | `stripe` | `boolean?` | `true` — the accent stripe along the top |
 | `fontFamily` | `string?` | `'Inter'` — the family the card's text asks for |
@@ -68,6 +68,7 @@ await renderOgImage(input, { fonts, wordmark: 'WaveGrid' });
 | `maxChips` | `number?` | `3` |
 | `titleMaxLength` | `number?` | `80` |
 | `subtitleMaxLength` | `number?` | `140` |
+| `onWarning` | `(message) => void` | `console.warn` — told when an image is left off the card |
 | `width` / `height` | `number?` | `1200` / `630` |
 
 ### Keyword chips & tile modes
@@ -130,9 +131,9 @@ template's two faint accent glows; `glows: []` leaves none.
 seeded noise, so the same card renders the same bytes every time, and a build
 that caches cards by content keeps working.
 
-**Grain is heavy.** Noise doesn't compress, so a grained card is over 1 MB
-where the same card without it is around 300 KB, and some apps skip a preview
-image that large. Glows alone are usually the better trade.
+**Grain is heavy.** Noise doesn't compress, so a grained card is close to
+1 MB where the same card without it is under 200 KB, and some apps skip a
+preview image that large. Glows alone are usually the better trade.
 
 ### Your own typeface
 
@@ -163,6 +164,30 @@ import { buildCard } from '@arraypress/og-image';
 const tree = buildCard({ title: 'The Healer', chips: ['Soothing'] }, { tile: 'none' });
 // → inspect/transform, or feed to satori() yourself
 ```
+
+### WebP and AVIF
+
+Satori draws PNG, JPEG, GIF and SVG. Artwork or a logo given as WebP or AVIF
+bytes (or a base64 `data:` URI) is converted to PNG through
+[`sharp`](https://sharp.pixelplumbing.com) when it's installed. It's an
+optional peer dependency, and any Astro project that optimises images already
+has it:
+
+```bash
+npm install sharp
+```
+
+Without it, the image is left off and `onWarning` is told why, so the card
+shows its initials (or no tile, with `tile: 'artwork'`) instead of an empty
+frame. A WebP *URL* is handed to Satori as it is; pass the bytes instead.
+
+### File size
+
+resvg writes RGBA, and on a card with a solid background the alpha channel is
+255 everywhere. An opaque card is saved as an RGB PNG instead, each row given
+the PNG filter that suits it, which takes a card with glows from about 320 KB
+to about 180 KB for a tenth of a second's work. A card with a see-through
+`colors.bg` keeps its alpha channel.
 
 ## Notes
 

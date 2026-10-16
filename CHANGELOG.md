@@ -26,8 +26,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (default `Inter`) and the title and wordmark use `displayFontFamily`
   (default `fontFamily`).
 
+- **WebP and AVIF artwork and logos**, converted to PNG through `sharp` when
+  it's installed: a new optional peer dependency, already in any Astro
+  project that optimises images. Satori can't draw either, so a WebP cover
+  gave an empty tile. Without sharp the image is left off with a warning
+  that says what to install, and the card falls back to its initials or no
+  tile.
+- **`onWarning`**, where those warnings go. Default: `console.warn`.
+
 ### Changed
 
+- **Opaque cards are saved as RGB PNGs.** resvg writes RGBA, and on a card
+  with a solid background that alpha channel is 255 everywhere. The card is
+  now encoded here without it, each row given the PNG filter that suits it
+  best (libpng's heuristic), with Node's own zlib: a card with glows went
+  from 318 KB to 179 KB, for about a tenth of a second. A card with a
+  see-through background is written as before.
 - **A logo is drawn at its own proportions.** Its width follows an SVG's
   `viewBox` (or `width` and `height`) or a PNG's header, at the badge's 40px
   height; a wide mark was shrunk to fit a square. A logo whose shape can't be

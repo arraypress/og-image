@@ -23,7 +23,9 @@ import { readFile } from 'node:fs/promises';
 import satori from 'satori';
 import { Resvg } from '@resvg/resvg-js';
 import { backdropImage } from './backdrop.js';
+import { drawable } from './decode.js';
 import { imageRatio, resolveImage } from './image.js';
+import { opaquePng } from './png.js';
 
 // ── Design constants ────────────────────────
 
@@ -368,6 +370,11 @@ export function buildCard(input = {}, options = {}) {
 /**
  * Render an Open Graph card to a PNG.
  *
+ * WebP and AVIF artwork or logos are converted through `sharp` when it's
+ * installed, and left off with a warning when it isn't. An opaque card (any
+ * card with a solid `colors.bg`) is saved as an RGB PNG, without the alpha
+ * channel resvg writes, which takes about 40% off the file.
+ *
  * @param {OgImageInput} input - The card content.
  * @param {OgImageOptions} [options={}] - Brand and layout options, plus fonts.
  *   Without `fonts`, the bundled Inter is used.
@@ -392,6 +399,11 @@ export async function renderOgImage(input, options = {}) {
   const height = options.height ?? DEFAULT_HEIGHT;
   const fonts = options.fonts ?? (await defaultFonts());
 
-  const svg = await satori(buildCard(input, options), { width, height, fonts });
-  return new Resvg(svg, { fitTo: { mode: 'width', value: width } }).render().asPng();
+  const warn = options.onWarning ?? console.warn;
+  const artwork = await drawable(input.artwork, 'artwork', warn);
+  const logo = await drawable(options.logo, 'logo', warn);
+
+  const svg = await satori(buildCard({ ...input, artwork }, { ...options, logo }), { width, height, fonts });
+  const image = new Resvg(svg, { fitTo: { mode: 'width', value: width } }).render();
+  return opaquePng(image.pixels, image.width, image.height) ?? image.asPng();
 }

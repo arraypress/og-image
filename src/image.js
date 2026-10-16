@@ -9,6 +9,16 @@
  */
 
 /**
+ * A run of bytes read as ASCII.
+ *
+ * @param {Uint8Array} bytes - The bytes.
+ * @param {number} start - First index.
+ * @param {number} end - Index after the last.
+ * @returns {string} The characters.
+ */
+const ascii = (bytes, start, end) => String.fromCharCode(...bytes.subarray(start, end));
+
+/**
  * Sniff an image MIME type from its leading magic bytes, so raw bytes can be
  * inlined as a data URI.
  *
@@ -20,6 +30,7 @@ export function sniffMime(bytes) {
   if (bytes[0] === 0xff && bytes[1] === 0xd8) return 'image/jpeg';
   if (bytes[0] === 0x47 && bytes[1] === 0x49) return 'image/gif';
   if (bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[8] === 0x57) return 'image/webp';
+  if (ascii(bytes, 4, 8) === 'ftyp' && ['avif', 'avis'].includes(ascii(bytes, 8, 12))) return 'image/avif';
   if (bytes[0] === 0x3c) return 'image/svg+xml';
   return 'image/png';
 }

@@ -64,7 +64,9 @@ export interface OgImageInput {
    *  `maxChips` (default 3); empty/blank entries are dropped. */
   chips?: string[];
   /** Right-tile image: an http(s) URL, a `data:` URI, or raw image bytes
-   *  (MIME sniffed). When absent, `initials` are shown instead (see `tile`). */
+   *  (MIME sniffed). PNG, JPEG, GIF or SVG; WebP and AVIF bytes are converted
+   *  through `sharp` when it's installed, and left off with a warning when it
+   *  isn't. When absent, `initials` are shown instead (see `tile`). */
   artwork?: string | Uint8Array | Buffer;
 }
 
@@ -89,8 +91,9 @@ export interface OgImageOptions {
   /** Tile glyph when there's no artwork. Default: first 3 letters of `wordmark`. */
   initials?: string;
   /** Real logo for the footer badge, replacing the initial letter. PNG, JPEG
-   *  or SVG bytes (the type is sniffed), or a data:/https: URL Satori can load.
-   *  Drawn 40px tall; an SVG's or PNG's own proportions set its width, else it's square. */
+   *  or SVG bytes (the type is sniffed; WebP and AVIF as for `artwork`), or a
+   *  data:/https: URL Satori can load. Drawn 40px tall; an SVG's or PNG's own
+   *  proportions set its width, else it's square. */
   logo?: Uint8Array | Buffer | string;
   /** Letter in the footer badge. Default: first letter of `wordmark`. */
   wordmarkInitial?: string;
@@ -110,6 +113,8 @@ export interface OgImageOptions {
   fontFamily?: string;
   /** Font family for the title and wordmark, as named in `fonts`. Default: `fontFamily` */
   displayFontFamily?: string;
+  /** Where to say an image was left off (a WebP without sharp, say). Default: `console.warn` */
+  onWarning?: (message: string) => void;
   /** Card width in px. Default: 1200 */
   width?: number;
   /** Card height in px. Default: 630 */
@@ -132,7 +137,8 @@ export function buildCard(input: OgImageInput, options?: OgImageOptions): OgElem
 
 /**
  * Render an Open Graph card to a PNG (1200×630 by default). Without `fonts`,
- * the bundled Inter is used.
+ * the bundled Inter is used. An opaque card is saved as an RGB PNG, with no
+ * alpha channel.
  *
  * @example
  * const png = await renderOgImage(
